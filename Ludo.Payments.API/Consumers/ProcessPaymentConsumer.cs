@@ -35,14 +35,6 @@ namespace Ludo.Payments.API.Consumers
                 arguments: null
                 );
 
-            _channel.QueueDeclare(
-                queue: PAYMENT_APPROVED_QUEUE,
-                durable: false,
-                exclusive: false,
-                autoDelete: false,
-                arguments: null
-                );
-
         }
         protected override Task ExecuteAsync(CancellationToken stoppingToken)
         {
@@ -50,6 +42,7 @@ namespace Ludo.Payments.API.Consumers
 
             consumer.Received += (sender, eventArgs) =>
             {
+
                 var byteArray = eventArgs.Body.ToArray();
                 var paymentInfoJson = Encoding.UTF8.GetString(byteArray);
 
@@ -60,12 +53,6 @@ namespace Ludo.Payments.API.Consumers
                 var paymentApproved = new PaymentApprovedIntegrationEvent(paymentInfo.IdProject);
                 var paymentApprovedJson = JsonSerializer.Serialize(paymentApproved);
                 var paymentApprovedBytes = Encoding.UTF8.GetBytes(paymentApprovedJson);
-
-                _channel.BasicPublish(
-                    exchange: "",
-                    routingKey: PAYMENT_APPROVED_QUEUE,
-                    basicProperties: null,
-                    body: paymentApprovedBytes);
 
                 _channel.BasicAck(eventArgs.DeliveryTag, false);
             };
